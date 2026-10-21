@@ -1,0 +1,23 @@
+{
+  "name": "Android Headless Build Box",
+  "image": "mingc/android-build-box:latest",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "developer",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "fwcd.kotlin",
+        "mathiasfroehlich.kotlin"
+      ]
+    }
+  },
+  "remoteUser": "root"
+}
