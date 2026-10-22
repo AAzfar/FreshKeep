@@ -16,7 +16,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             // Thread-safe lock to prevent multiple database instances running concurrently
             return INSTANCE ?: synchronized(this) {
-                instance = Room.databaseBuilder(
+                val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "freshkeep_database"

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.personal.freshkeep-mergeDebugResources-52:/values-si/values-si.xml",
+            "outputFile": "com.personal.freshkeep-mergeDebugResources-55:/values-si/values-si.xml",
             "map": [
                 {
                     "source": "/home/work/.gradle/caches/transforms-3/996e277ace51d3e43898f33467b78969/transformed/play-services-basement-18.1.0/res/values-si/values.xml",

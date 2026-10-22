@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.personal.freshkeep-mergeDebugResources-52:/values-zh-rCN/values-zh-rCN.xml",
+            "outputFile": "com.personal.freshkeep-mergeDebugResources-55:/values-zh-rCN/values-zh-rCN.xml",
             "map": [
                 {
                     "source": "/home/work/.gradle/caches/transforms-3/1bb207b1d9ce3b46a87433a7bc687e67/transformed/ui-release/res/values-zh-rCN/values-zh-rCN.xml",

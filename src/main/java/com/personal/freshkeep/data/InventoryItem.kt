@@ -3,21 +3,21 @@ package com.personal.freshkeep.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-enum class ItemCategory(val displayName: String, val useExplicitCalendar: Boolean) {
-    FRESH_FOOD("Fresh Food (Days)", useExplicitCalendar = false),
-    GROCERY("Pantry/Groceries (Days)", useExplicitCalendar = false),
-    MEDICINE("Medicine (Exact Date)", useExplicitCalendar = true),
-    BABY_CARE("Baby Care (Exact Date)", useExplicitCalendar = true),
-    OTHERS("Others (Days)", useExplicitCalendar = false)
+enum class ItemCategory(val displayName: String, val defaultDays: Int) {
+    FRESH_FOOD("Fresh Food", 5),
+    GROCERY("Pantry/Groceries", 90),
+    MEDICINE("Medicine", 365),
+    BABY_CARE("Baby Care", 180),
+    OTHERS("Others", 14)
 }
 
 @Entity(tableName = "inventory_items")
 data class InventoryItem(
     @PrimaryKey(autoGenerate = true) 
     val id: Int = 0,
-    val barcode: String?,
+    val barcode: String?, // Nullable to easily support manual additions
     val name: String,
-    val category: String = "OTHERS", // SQLite text-based storage backup field
+    val category: String = "OTHERS",
     val expiryDateEpoch: Long,
     val quantity: Int
 )

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 fun DashboardScreen(
     viewModel: InventoryViewModel,
     onOpenScanner: () -> Unit,
+    onOpenManualEntry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val itemList by viewModel.items.collectAsState()
@@ -47,6 +48,16 @@ fun DashboardScreen(
             shape = RoundedCornerShape(8.dp)
         ) {
             Text("📷 Scan Barcode to Add", fontSize = 16.sp, color = Color.White)
+        }
+
+        // Add this Button in the column right beneath the existing camera scan button:
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = onOpenManualEntry,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text("➕ Add Item Manually", fontSize = 16.sp, color = Color(0xFF0061A4))
         }
 
         Spacer(modifier = Modifier.height(16.dp))

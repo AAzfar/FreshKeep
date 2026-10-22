@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.personal.freshkeep-mergeDebugResources-52:/values-sr/values-sr.xml",
+            "outputFile": "com.personal.freshkeep-mergeDebugResources-55:/values-sr/values-sr.xml",
             "map": [
                 {
                     "source": "/home/work/.gradle/caches/transforms-3/ba3075c54689a4c12297325ebd3638b4/transformed/foundation-release/res/values-sr/values-sr.xml",

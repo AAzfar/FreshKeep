@@ -42,7 +42,7 @@ public final class ItemDao_Impl implements ItemDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `inventory_items` (`id`,`barcode`,`name`,`expiryDateEpoch`,`quantity`) VALUES (nullif(?, 0),?,?,?,?)";
+        return "INSERT OR REPLACE INTO `inventory_items` (`id`,`barcode`,`name`,`category`,`expiryDateEpoch`,`quantity`) VALUES (nullif(?, 0),?,?,?,?,?)";
       }
 
       @Override
@@ -55,8 +55,9 @@ public final class ItemDao_Impl implements ItemDao {
           statement.bindString(2, entity.getBarcode());
         }
         statement.bindString(3, entity.getName());
-        statement.bindLong(4, entity.getExpiryDateEpoch());
-        statement.bindLong(5, entity.getQuantity());
+        statement.bindString(4, entity.getCategory());
+        statement.bindLong(5, entity.getExpiryDateEpoch());
+        statement.bindLong(6, entity.getQuantity());
       }
     };
     this.__deletionAdapterOfInventoryItem = new EntityDeletionOrUpdateAdapter<InventoryItem>(__db) {
@@ -124,6 +125,7 @@ public final class ItemDao_Impl implements ItemDao {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfBarcode = CursorUtil.getColumnIndexOrThrow(_cursor, "barcode");
           final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
+          final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
           final int _cursorIndexOfExpiryDateEpoch = CursorUtil.getColumnIndexOrThrow(_cursor, "expiryDateEpoch");
           final int _cursorIndexOfQuantity = CursorUtil.getColumnIndexOrThrow(_cursor, "quantity");
           final List<InventoryItem> _result = new ArrayList<InventoryItem>(_cursor.getCount());
@@ -139,11 +141,13 @@ public final class ItemDao_Impl implements ItemDao {
             }
             final String _tmpName;
             _tmpName = _cursor.getString(_cursorIndexOfName);
+            final String _tmpCategory;
+            _tmpCategory = _cursor.getString(_cursorIndexOfCategory);
             final long _tmpExpiryDateEpoch;
             _tmpExpiryDateEpoch = _cursor.getLong(_cursorIndexOfExpiryDateEpoch);
             final int _tmpQuantity;
             _tmpQuantity = _cursor.getInt(_cursorIndexOfQuantity);
-            _item = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpExpiryDateEpoch,_tmpQuantity);
+            _item = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity);
             _result.add(_item);
           }
           return _result;
@@ -176,6 +180,7 @@ public final class ItemDao_Impl implements ItemDao {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfBarcode = CursorUtil.getColumnIndexOrThrow(_cursor, "barcode");
           final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
+          final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
           final int _cursorIndexOfExpiryDateEpoch = CursorUtil.getColumnIndexOrThrow(_cursor, "expiryDateEpoch");
           final int _cursorIndexOfQuantity = CursorUtil.getColumnIndexOrThrow(_cursor, "quantity");
           final InventoryItem _result;
@@ -190,11 +195,13 @@ public final class ItemDao_Impl implements ItemDao {
             }
             final String _tmpName;
             _tmpName = _cursor.getString(_cursorIndexOfName);
+            final String _tmpCategory;
+            _tmpCategory = _cursor.getString(_cursorIndexOfCategory);
             final long _tmpExpiryDateEpoch;
             _tmpExpiryDateEpoch = _cursor.getLong(_cursorIndexOfExpiryDateEpoch);
             final int _tmpQuantity;
             _tmpQuantity = _cursor.getInt(_cursorIndexOfQuantity);
-            _result = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpExpiryDateEpoch,_tmpQuantity);
+            _result = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity);
           } else {
             _result = null;
           }
