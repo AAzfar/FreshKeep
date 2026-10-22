@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application") version "8.2.2"
     id("org.jetbrains.kotlin.android") version "1.9.22"
@@ -16,6 +18,17 @@ android {
         versionName = "1.0"
 
         vectorDrawables { useSupportLibrary = true }
+        
+        // 1. Read the secret string from your local file
+        val properties = Properties()
+        val propertiesFile = project.rootProject.file("local.properties")
+        if (propertiesFile.exists()) {
+            properties.load(propertiesFile.inputStream())
+        }
+        val apiKey = properties.getProperty("barcodenest.api.key") ?: ""
+
+        // 2. Inject it securely as a native variable configuration field
+        buildConfigField("String", "BARCODENEST_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {
@@ -36,6 +49,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true // Ensure this compiler flag toggle is switched ON
     }
 
     composeOptions {
