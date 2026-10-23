@@ -8,7 +8,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,6 +43,8 @@ class MainActivity : ComponentActivity() {
     private var targetBarcode = mutableStateOf<String?>(null)
     private var detectedNetworkName = mutableStateOf("")
     private var detectedNetworkJson = mutableStateOf<String?>(null)
+    private var lookupInProgress = mutableStateOf(false)
+    private var lookupStatus = mutableStateOf("")
 
     // Camera access must be granted at runtime; without it CameraX only shows a black preview
     private val cameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -62,15 +67,18 @@ class MainActivity : ComponentActivity() {
                             if (code != targetBarcode.value) {
                                 targetBarcode.value = code
                                 isScannerOpen.value = false
-                                
+                                detectedNetworkName.value = ""
+                                detectedNetworkJson.value = null
+                                lookupInProgress.value = true
+                                lookupStatus.value = "Looking up barcode..."
+                                showAddDialog.value = true
+
                                 lifecycleScope.launch {
-                                    // High speed async network fetch pulling title data and JSON strings simultaneously
-                                    val (apiName, rawJson) = com.personal.freshkeep.scanner.BarcodeNestClient.fetchProductData(code)
-                                    
-                                    // AUTOFILL ENGINE RULES: Injecting API responses straight into states
-                                    detectedNetworkName.value = apiName ?: ""
-                                    detectedNetworkJson.value = rawJson
-                                    showAddDialog.value = true
+                                    val result = BarcodeNestClient.fetchProductData(code)
+                                    detectedNetworkName.value = result.productName.orEmpty()
+                                    detectedNetworkJson.value = result.rawJson
+                                    lookupStatus.value = result.message
+                                    lookupInProgress.value = false
                                 }
                             }
                         })
@@ -83,6 +91,8 @@ class MainActivity : ComponentActivity() {
                             targetBarcode.value = null
                             detectedNetworkName.value = ""
                             detectedNetworkJson.value = null
+                            lookupInProgress.value = false
+                            lookupStatus.value = ""
                             showAddDialog.value = true 
                         }
                     )
@@ -97,9 +107,16 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun ItemEntryFormDialog() {
-        var name by remember { mutableStateOf(detectedNetworkName.value) }
+        var name by remember(targetBarcode.value) { mutableStateOf(detectedNetworkName.value) }
         var category by remember { mutableStateOf(ItemCategory.OTHERS) }
         var inputModeByDays by remember { mutableStateOf(true) } // Dual entry switch toggle
+        var showRawResponse by remember { mutableStateOf(false) }
+
+        LaunchedEffect(detectedNetworkName.value) {
+            if (name.isBlank() && detectedNetworkName.value.isNotBlank()) {
+                name = detectedNetworkName.value
+            }
+        }
         
         // Input string assignments
         var daysInput by remember { mutableStateOf(category.defaultDays.toString()) }
@@ -120,6 +137,27 @@ class MainActivity : ComponentActivity() {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Item Name") })
+
+                    if (targetBarcode.value != null) {
+                        if (lookupInProgress.value) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        }
+                        Text(lookupStatus.value, style = MaterialTheme.typography.bodySmall)
+                        detectedNetworkJson.value?.let { rawJson ->
+                            TextButton(onClick = { showRawResponse = !showRawResponse }) {
+                                Text(if (showRawResponse) "Hide API response" else "Show API response")
+                            }
+                            if (showRawResponse) {
+                                SelectionContainer {
+                                    Text(
+                                        text = rawJson,
+                                        modifier = Modifier.heightIn(max = 140.dp).verticalScroll(rememberScrollState()),
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
                     
                     Text("Category Selector:", fontWeight = FontWeight.Bold)
                     Row {
