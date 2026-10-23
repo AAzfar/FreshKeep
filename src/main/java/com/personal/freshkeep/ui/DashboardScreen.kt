@@ -14,12 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.personal.freshkeep.data.InventoryItem
+import org.json.JSONArray
+import org.json.JSONObject
+import org.json.JSONTokener
 
 @Composable
 fun DashboardScreen(
     viewModel: InventoryViewModel,
     onOpenScanner: () -> Unit,
     onOpenManualEntry: () -> Unit,
+    onRestockBarcodeItem: (InventoryItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val itemList by viewModel.items.collectAsState()
@@ -90,7 +94,7 @@ fun DashboardScreen(
             Tab(
                 selected = selectedSection == 2,
                 onClick = { selectedSection = 2 },
-                text = { Text("Buy List (${buyListItems.size})") }
+                text = { Text("To Buy List (${buyListItems.size})") }
             )
         }
 
@@ -154,25 +158,44 @@ fun DashboardScreen(
                         }
                     } else null,
                     onMarkPurchased = if (selectedSection == 2) {
-                        { viewModel.markPurchased(item) }
+                        {
+                            if (item.barcode.isNullOrBlank()) {
+                                viewModel.markPurchased(item)
+                            } else {
+                                onRestockBarcodeItem(item)
+                            }
+                        }
                     } else null,
                     onShowDetails = { json -> activeJsonDetails.value = json }
                 )
                 
                 // Interactive JSON System Viewer Modal overlay box
                 if (activeJsonDetails.value != null) {
+                    val jsonFields = remember(activeJsonDetails.value) {
+                        formatJsonFields(activeJsonDetails.value!!)
+                    }
                     AlertDialog(
                         onDismissRequest = { activeJsonDetails.value = null },
-                        title = { Text("Barcode Metadata Payload JSON") },
+                        title = { Text("Product Details") },
                         text = {
-                            Box(modifier = Modifier.heightIn(max = 300.dp)) {
-                                LazyColumn {
-                                    item {
+                            LazyColumn(
+                                modifier = Modifier.heightIn(max = 360.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(jsonFields) { (label, value) ->
+                                    Row(verticalAlignment = Alignment.Top) {
                                         Text(
-                                            text = activeJsonDetails.value!!, 
-                                            fontSize = 11.sp, 
-                                            color = Color.DarkGray,
-                                            style = LocalTextStyle.current.copy(lineHeight = 16.sp)
+                                            text = "$label :",
+                                            modifier = Modifier.width(130.dp),
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color.DarkGray
+                                        )
+                                        Text(
+                                            text = value,
+                                            modifier = Modifier.weight(1f),
+                                            fontSize = 13.sp,
+                                            color = Color.DarkGray
                                         )
                                     }
                                 }
@@ -185,6 +208,42 @@ fun DashboardScreen(
                 }
             }
         }
+    }
+}
+
+private fun formatJsonFields(rawJson: String): List<Pair<String, String>> {
+    val fields = mutableListOf<Pair<String, String>>()
+
+    fun appendValue(value: Any?, path: String) {
+        when (value) {
+            is JSONObject -> {
+                val keys = value.keys()
+                if (!keys.hasNext()) {
+                    fields += (path.ifBlank { "Response" }) to "{}"
+                }
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    appendValue(value.opt(key), if (path.isBlank()) key else "$path.$key")
+                }
+            }
+            is JSONArray -> {
+                if (value.length() == 0) {
+                    fields += (path.ifBlank { "Response" }) to "[]"
+                } else {
+                    for (index in 0 until value.length()) {
+                        appendValue(value.opt(index), "$path[$index]")
+                    }
+                }
+            }
+            else -> fields += (path.ifBlank { "Response" }) to value.toString()
+        }
+    }
+
+    return try {
+        appendValue(JSONTokener(rawJson).nextValue(), "")
+        fields
+    } catch (_: Exception) {
+        listOf("Response" to rawJson)
     }
 }
 
@@ -244,7 +303,7 @@ fun InventoryRow(
                 if (showAvailabilityControl) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (item.isOnBuyList) "On buy list" else if (item.isAvailable) "Available" else "Finished",
+                        text = if (item.isOnBuyList) "On buy list" else if (item.isAvailable) "Available   " else "Finished   ",
                         fontSize = 12.sp,
                         color = if (item.isAvailable) Color(0xFF386B01) else Color(0xFF666666)
                     )

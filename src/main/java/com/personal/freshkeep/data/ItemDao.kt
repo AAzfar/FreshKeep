@@ -22,8 +22,8 @@ interface ItemDao {
     @Query("UPDATE inventory_items SET isOnBuyList = 1 WHERE id IN (:itemIds)")
     suspend fun addItemsToBuyList(itemIds: List<Int>)
 
-    @Query("UPDATE inventory_items SET isOnBuyList = 0, isAvailable = 1, expiryDateEpoch = :expiryDateEpoch WHERE id = :itemId")
-    suspend fun markItemPurchased(itemId: Int, expiryDateEpoch: Long)
+    @Query("UPDATE inventory_items SET name = :name, isOnBuyList = 0, isAvailable = 1, expiryDateEpoch = :expiryDateEpoch WHERE id = :itemId")
+    suspend fun markItemPurchased(itemId: Int, name: String, expiryDateEpoch: Long)
 
     @Delete
     suspend fun deleteItem(item: InventoryItem)

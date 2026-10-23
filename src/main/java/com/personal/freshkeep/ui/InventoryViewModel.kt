@@ -57,14 +57,18 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun markPurchased(item: InventoryItem) {
+    fun markPurchased(
+        item: InventoryItem,
+        name: String = item.name,
+        expiryDateEpoch: Long? = null
+    ) {
         viewModelScope.launch {
             val category = ItemCategory.values().firstOrNull { it.name == item.category }
                 ?: ItemCategory.OTHERS
-            val newExpiryDate = Calendar.getInstance().apply {
+            val newExpiryDate = expiryDateEpoch ?: Calendar.getInstance().apply {
                 add(Calendar.DAY_OF_YEAR, category.defaultDays)
             }.timeInMillis
-            itemDao.markItemPurchased(item.id, newExpiryDate)
+            itemDao.markItemPurchased(item.id, name, newExpiryDate)
         }
     }
 }

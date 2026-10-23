@@ -102,7 +102,7 @@ public final class ItemDao_Impl implements ItemDao {
       @Override
       @NonNull
       public String createQuery() {
-        final String _query = "UPDATE inventory_items SET isOnBuyList = 0, isAvailable = 1, expiryDateEpoch = ? WHERE id = ?";
+        final String _query = "UPDATE inventory_items SET name = ?, isOnBuyList = 0, isAvailable = 1, expiryDateEpoch = ? WHERE id = ?";
         return _query;
       }
     };
@@ -175,7 +175,7 @@ public final class ItemDao_Impl implements ItemDao {
   }
 
   @Override
-  public Object markItemPurchased(final int itemId, final long expiryDateEpoch,
+  public Object markItemPurchased(final int itemId, final String name, final long expiryDateEpoch,
       final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
@@ -183,8 +183,10 @@ public final class ItemDao_Impl implements ItemDao {
       public Unit call() throws Exception {
         final SupportSQLiteStatement _stmt = __preparedStmtOfMarkItemPurchased.acquire();
         int _argIndex = 1;
-        _stmt.bindLong(_argIndex, expiryDateEpoch);
+        _stmt.bindString(_argIndex, name);
         _argIndex = 2;
+        _stmt.bindLong(_argIndex, expiryDateEpoch);
+        _argIndex = 3;
         _stmt.bindLong(_argIndex, itemId);
         try {
           __db.beginTransaction();
