@@ -23,5 +23,7 @@ data class InventoryItem(
     val quantity: Int,
     val rawJsonDetails: String? = null,
     @ColumnInfo(defaultValue = "1")
-    val isAvailable: Boolean = true
+    val isAvailable: Boolean = true,
+    @ColumnInfo(defaultValue = "0")
+    val isOnBuyList: Boolean = false
 )

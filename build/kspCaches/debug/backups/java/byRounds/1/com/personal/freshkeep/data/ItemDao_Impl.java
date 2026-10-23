@@ -12,12 +12,15 @@ import androidx.room.RoomSQLiteQuery;
 import androidx.room.SharedSQLiteStatement;
 import androidx.room.util.CursorUtil;
 import androidx.room.util.DBUtil;
+import androidx.room.util.StringUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
 import java.lang.Class;
 import java.lang.Exception;
+import java.lang.Integer;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
+import java.lang.StringBuilder;
 import java.lang.SuppressWarnings;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,13 +42,15 @@ public final class ItemDao_Impl implements ItemDao {
 
   private final SharedSQLiteStatement __preparedStmtOfUpdateAvailability;
 
+  private final SharedSQLiteStatement __preparedStmtOfMarkItemPurchased;
+
   public ItemDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfInventoryItem = new EntityInsertionAdapter<InventoryItem>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `inventory_items` (`id`,`barcode`,`name`,`category`,`expiryDateEpoch`,`quantity`,`rawJsonDetails`,`isAvailable`) VALUES (nullif(?, 0),?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `inventory_items` (`id`,`barcode`,`name`,`category`,`expiryDateEpoch`,`quantity`,`rawJsonDetails`,`isAvailable`,`isOnBuyList`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -68,6 +73,8 @@ public final class ItemDao_Impl implements ItemDao {
         }
         final int _tmp = entity.isAvailable() ? 1 : 0;
         statement.bindLong(8, _tmp);
+        final int _tmp_1 = entity.isOnBuyList() ? 1 : 0;
+        statement.bindLong(9, _tmp_1);
       }
     };
     this.__deletionAdapterOfInventoryItem = new EntityDeletionOrUpdateAdapter<InventoryItem>(__db) {
@@ -88,6 +95,14 @@ public final class ItemDao_Impl implements ItemDao {
       @NonNull
       public String createQuery() {
         final String _query = "UPDATE inventory_items SET isAvailable = ? WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfMarkItemPurchased = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE inventory_items SET isOnBuyList = 0, isAvailable = 1, expiryDateEpoch = ? WHERE id = ?";
         return _query;
       }
     };
@@ -160,6 +175,34 @@ public final class ItemDao_Impl implements ItemDao {
   }
 
   @Override
+  public Object markItemPurchased(final int itemId, final long expiryDateEpoch,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfMarkItemPurchased.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, expiryDateEpoch);
+        _argIndex = 2;
+        _stmt.bindLong(_argIndex, itemId);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfMarkItemPurchased.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Flow<List<InventoryItem>> getAllItemsSortedByExpiry() {
     final String _sql = "SELECT * FROM inventory_items ORDER BY expiryDateEpoch ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
@@ -177,6 +220,7 @@ public final class ItemDao_Impl implements ItemDao {
           final int _cursorIndexOfQuantity = CursorUtil.getColumnIndexOrThrow(_cursor, "quantity");
           final int _cursorIndexOfRawJsonDetails = CursorUtil.getColumnIndexOrThrow(_cursor, "rawJsonDetails");
           final int _cursorIndexOfIsAvailable = CursorUtil.getColumnIndexOrThrow(_cursor, "isAvailable");
+          final int _cursorIndexOfIsOnBuyList = CursorUtil.getColumnIndexOrThrow(_cursor, "isOnBuyList");
           final List<InventoryItem> _result = new ArrayList<InventoryItem>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final InventoryItem _item;
@@ -206,7 +250,11 @@ public final class ItemDao_Impl implements ItemDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsAvailable);
             _tmpIsAvailable = _tmp != 0;
-            _item = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails,_tmpIsAvailable);
+            final boolean _tmpIsOnBuyList;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsOnBuyList);
+            _tmpIsOnBuyList = _tmp_1 != 0;
+            _item = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails,_tmpIsAvailable,_tmpIsOnBuyList);
             _result.add(_item);
           }
           return _result;
@@ -244,6 +292,7 @@ public final class ItemDao_Impl implements ItemDao {
           final int _cursorIndexOfQuantity = CursorUtil.getColumnIndexOrThrow(_cursor, "quantity");
           final int _cursorIndexOfRawJsonDetails = CursorUtil.getColumnIndexOrThrow(_cursor, "rawJsonDetails");
           final int _cursorIndexOfIsAvailable = CursorUtil.getColumnIndexOrThrow(_cursor, "isAvailable");
+          final int _cursorIndexOfIsOnBuyList = CursorUtil.getColumnIndexOrThrow(_cursor, "isOnBuyList");
           final InventoryItem _result;
           if (_cursor.moveToFirst()) {
             final int _tmpId;
@@ -272,7 +321,11 @@ public final class ItemDao_Impl implements ItemDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsAvailable);
             _tmpIsAvailable = _tmp != 0;
-            _result = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails,_tmpIsAvailable);
+            final boolean _tmpIsOnBuyList;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsOnBuyList);
+            _tmpIsOnBuyList = _tmp_1 != 0;
+            _result = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails,_tmpIsAvailable,_tmpIsOnBuyList);
           } else {
             _result = null;
           }
@@ -280,6 +333,37 @@ public final class ItemDao_Impl implements ItemDao {
         } finally {
           _cursor.close();
           _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object addItemsToBuyList(final List<Integer> itemIds,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final StringBuilder _stringBuilder = StringUtil.newStringBuilder();
+        _stringBuilder.append("UPDATE inventory_items SET isOnBuyList = 1 WHERE id IN (");
+        final int _inputSize = itemIds.size();
+        StringUtil.appendPlaceholders(_stringBuilder, _inputSize);
+        _stringBuilder.append(")");
+        final String _sql = _stringBuilder.toString();
+        final SupportSQLiteStatement _stmt = __db.compileStatement(_sql);
+        int _argIndex = 1;
+        for (int _item : itemIds) {
+          _stmt.bindLong(_argIndex, _item);
+          _argIndex++;
+        }
+        __db.beginTransaction();
+        try {
+          _stmt.executeUpdateDelete();
+          __db.setTransactionSuccessful();
+          return Unit.INSTANCE;
+        } finally {
+          __db.endTransaction();
         }
       }
     }, $completion);

@@ -24,9 +24,20 @@ fun DashboardScreen(
 ) {
     val itemList by viewModel.items.collectAsState()
     var selectedSection by remember { mutableIntStateOf(0) }
+    var selectedFinishedIds by remember { mutableStateOf(emptySet<Int>()) }
     val currentTime = System.currentTimeMillis()
-    val availableItems = itemList.filter { it.isAvailable && it.expiryDateEpoch >= currentTime }
-    val finishedItems = itemList.filter { !it.isAvailable || it.expiryDateEpoch < currentTime }
+    val availableItems = itemList.filter {
+        !it.isOnBuyList && it.isAvailable && it.expiryDateEpoch >= currentTime
+    }
+    val finishedItems = itemList.filter {
+        !it.isOnBuyList && (!it.isAvailable || it.expiryDateEpoch < currentTime)
+    }
+    val buyListItems = itemList.filter { it.isOnBuyList }
+    val finishedItemIds = finishedItems.map { it.id }.toSet()
+
+    LaunchedEffect(finishedItemIds) {
+        selectedFinishedIds = selectedFinishedIds.intersect(finishedItemIds)
+    }
 
     Column(
         modifier = modifier
@@ -65,7 +76,7 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TabRow(selectedTabIndex = selectedSection) {
+        ScrollableTabRow(selectedTabIndex = selectedSection) {
             Tab(
                 selected = selectedSection == 0,
                 onClick = { selectedSection = 0 },
@@ -76,17 +87,49 @@ fun DashboardScreen(
                 onClick = { selectedSection = 1 },
                 text = { Text("Finished / Expired (${finishedItems.size})") }
             )
+            Tab(
+                selected = selectedSection == 2,
+                onClick = { selectedSection = 2 },
+                text = { Text("Buy List (${buyListItems.size})") }
+            )
+        }
+
+        if (selectedSection == 1) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("${selectedFinishedIds.size} selected", color = Color.Gray)
+                Button(
+                    onClick = {
+                        viewModel.addToBuyList(selectedFinishedIds)
+                        selectedFinishedIds = emptySet()
+                    },
+                    enabled = selectedFinishedIds.isNotEmpty()
+                ) {
+                    Text("Add to Buy List")
+                }
+            }
         }
 
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val sectionItems = if (selectedSection == 0) availableItems else finishedItems
+            val sectionItems = when (selectedSection) {
+                0 -> availableItems
+                1 -> finishedItems
+                else -> buyListItems
+            }
             if (sectionItems.isEmpty()) {
                 item {
                     Text(
-                        text = if (selectedSection == 0) "No available items" else "No finished or expired items",
+                        text = when (selectedSection) {
+                            0 -> "No available items"
+                            1 -> "No finished or expired items"
+                            else -> "Your buy list is empty"
+                        },
                         modifier = Modifier.fillMaxWidth().padding(24.dp),
                         color = Color.Gray
                     )
@@ -99,6 +142,20 @@ fun DashboardScreen(
                     item = item, 
                     onDelete = { viewModel.removeItem(item) },
                     onAvailabilityChange = { isAvailable -> viewModel.updateAvailability(item, isAvailable) },
+                    showAvailabilityControl = selectedSection != 2,
+                    selectedForBuyList = item.id in selectedFinishedIds,
+                    onSelectionChange = if (selectedSection == 1) {
+                        { isSelected ->
+                            selectedFinishedIds = if (isSelected) {
+                                selectedFinishedIds + item.id
+                            } else {
+                                selectedFinishedIds - item.id
+                            }
+                        }
+                    } else null,
+                    onMarkPurchased = if (selectedSection == 2) {
+                        { viewModel.markPurchased(item) }
+                    } else null,
                     onShowDetails = { json -> activeJsonDetails.value = json }
                 )
                 
@@ -136,6 +193,10 @@ fun InventoryRow(
     item: InventoryItem, 
     onDelete: () -> Unit,
     onAvailabilityChange: (Boolean) -> Unit,
+    showAvailabilityControl: Boolean,
+    selectedForBuyList: Boolean,
+    onSelectionChange: ((Boolean) -> Unit)?,
+    onMarkPurchased: (() -> Unit)?,
     onShowDetails: (String) -> Unit
 ) {
     val currentTime = System.currentTimeMillis()
@@ -171,9 +232,19 @@ fun InventoryRow(
                 if (!item.barcode.isNullOrBlank()) {
                     Text(text = "Code: ${item.barcode}", fontSize = 11.sp, color = Color.Gray)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onSelectionChange != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Select for buy list", fontSize = 12.sp, color = Color.Gray)
+                        Checkbox(
+                            checked = selectedForBuyList,
+                            onCheckedChange = onSelectionChange
+                        )
+                    }
+                }
+                if (showAvailabilityControl) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (item.isAvailable) "Available" else "Finished",
+                        text = if (item.isOnBuyList) "On buy list" else if (item.isAvailable) "Available" else "Finished",
                         fontSize = 12.sp,
                         color = if (item.isAvailable) Color(0xFF386B01) else Color(0xFF666666)
                     )
@@ -182,10 +253,19 @@ fun InventoryRow(
                         onCheckedChange = onAvailabilityChange
                     )
                 }
+                }
             }
             
             // Action Panel Management Layout Hub
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (onMarkPurchased != null) {
+                    Button(
+                        onClick = onMarkPurchased,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text("Bought", fontSize = 12.sp)
+                    }
+                }
                 if (!item.rawJsonDetails.isNullOrBlank()) {
                     Button(
                         onClick = { onShowDetails(item.rawJsonDetails) },

@@ -49,4 +49,22 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
             itemDao.updateAvailability(item.id, isAvailable)
         }
     }
+
+    fun addToBuyList(itemIds: Set<Int>) {
+        if (itemIds.isEmpty()) return
+        viewModelScope.launch {
+            itemDao.addItemsToBuyList(itemIds.toList())
+        }
+    }
+
+    fun markPurchased(item: InventoryItem) {
+        viewModelScope.launch {
+            val category = ItemCategory.values().firstOrNull { it.name == item.category }
+                ?: ItemCategory.OTHERS
+            val newExpiryDate = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, category.defaultDays)
+            }.timeInMillis
+            itemDao.markItemPurchased(item.id, newExpiryDate)
+        }
+    }
 }

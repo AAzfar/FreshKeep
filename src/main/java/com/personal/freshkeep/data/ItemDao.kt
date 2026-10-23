@@ -19,6 +19,12 @@ interface ItemDao {
     @Query("UPDATE inventory_items SET isAvailable = :isAvailable WHERE id = :itemId")
     suspend fun updateAvailability(itemId: Int, isAvailable: Boolean)
 
+    @Query("UPDATE inventory_items SET isOnBuyList = 1 WHERE id IN (:itemIds)")
+    suspend fun addItemsToBuyList(itemIds: List<Int>)
+
+    @Query("UPDATE inventory_items SET isOnBuyList = 0, isAvailable = 1, expiryDateEpoch = :expiryDateEpoch WHERE id = :itemId")
+    suspend fun markItemPurchased(itemId: Int, expiryDateEpoch: Long)
+
     @Delete
     suspend fun deleteItem(item: InventoryItem)
 }
