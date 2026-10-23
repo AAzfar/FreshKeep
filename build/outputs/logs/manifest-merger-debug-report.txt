@@ -155,7 +155,7 @@ MERGED from [com.google.android.odml:image:1.0.0-beta1] /home/work/.gradle/cache
 	android:label
 		ADDED from /home/work/FreshKeep/src/main/AndroidManifest.xml:11:9-34
 	android:icon
-		ADDED from /home/work/FreshKeep/src/main/AndroidManifest.xml:12:9-56
+		ADDED from /home/work/FreshKeep/src/main/AndroidManifest.xml:12:9-43
 	android:allowBackup
 		ADDED from /home/work/FreshKeep/src/main/AndroidManifest.xml:10:9-35
 	android:theme

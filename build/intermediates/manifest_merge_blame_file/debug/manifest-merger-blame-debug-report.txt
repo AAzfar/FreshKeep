@@ -55,8 +55,8 @@
 32-->[androidx.core:core:1.12.0] /home/work/.gradle/caches/transforms-3/5557dab87c632454f8101a87acd32e88/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
 33        android:debuggable="true"
 34        android:extractNativeLibs="false"
-35        android:icon="@android:drawable/ic_menu_manage"
-35-->/home/work/FreshKeep/src/main/AndroidManifest.xml:12:9-56
+35        android:icon="@mipmap/ic_launcher"
+35-->/home/work/FreshKeep/src/main/AndroidManifest.xml:12:9-43
 36        android:label="FreshKeep"
 36-->/home/work/FreshKeep/src/main/AndroidManifest.xml:11:9-34
 37        android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >

@@ -32,7 +32,7 @@
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:debuggable="true"
         android:extractNativeLibs="false"
-        android:icon="@android:drawable/ic_menu_manage"
+        android:icon="@mipmap/ic_launcher"
         android:label="FreshKeep"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
         <activity
