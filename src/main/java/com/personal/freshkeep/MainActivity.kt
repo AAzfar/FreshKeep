@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
     private var showAddDialog = mutableStateOf(false)
     private var targetBarcode = mutableStateOf<String?>(null)
     private var detectedNetworkName = mutableStateOf("")
+    private var detectedNetworkJson = mutableStateOf<String?>(null)
 
     // Camera access must be granted at runtime; without it CameraX only shows a black preview
     private val cameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -57,13 +58,18 @@ class MainActivity : ComponentActivity() {
             Surface(modifier = Modifier.fillMaxSize()) {
                 if (isScannerOpen.value) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        CameraPreview(modifier = Modifier.fillMaxSize(), onBarcodeScanned = { code ->
+                        CameraPreview(onBarcodeScanned = { code ->
                             if (code != targetBarcode.value) {
                                 targetBarcode.value = code
                                 isScannerOpen.value = false
-                                // Launch high speed API call asynchronous network routine
+                                
                                 lifecycleScope.launch {
-                                    detectedNetworkName.value = BarcodeNestClient.fetchProductName(code) ?: ""
+                                    // High speed async network fetch pulling title data and JSON strings simultaneously
+                                    val (apiName, rawJson) = com.personal.freshkeep.scanner.BarcodeNestClient.fetchProductData(code)
+                                    
+                                    // AUTOFILL ENGINE RULES: Injecting API responses straight into states
+                                    detectedNetworkName.value = apiName ?: ""
+                                    detectedNetworkJson.value = rawJson
                                     showAddDialog.value = true
                                 }
                             }
@@ -76,6 +82,7 @@ class MainActivity : ComponentActivity() {
                         onOpenManualEntry = { 
                             targetBarcode.value = null
                             detectedNetworkName.value = ""
+                            detectedNetworkJson.value = null
                             showAddDialog.value = true 
                         }
                     )
@@ -154,8 +161,22 @@ class MainActivity : ComponentActivity() {
                             cal.set(dateYear.toIntOrNull() ?: 2026, (dateMonth.toIntOrNull() ?: 12) - 1, dateDay.toIntOrNull() ?: 31)
                             cal.timeInMillis
                         }
+                        val finalEpoch = if (isExplicitDate) {
+                            timeInput
+                        } else {
+                            Calendar.getInstance().apply {
+                                add(Calendar.DAY_OF_YEAR, timeInput.toInt())
+                            }.timeInMillis
+                        }
 
-                        viewModel.addItem(name, targetBarcode.value, category, timeInput, 1, isExplicitDate)
+                        viewModel.addItem(
+                            name = name,
+                            barcode = targetBarcode.value,
+                            category = category.name,
+                            expiryDateEpoch = finalEpoch,
+                            quantity = 1,
+                            rawJson = detectedNetworkJson.value // Binding full tracking details to database row entry field
+                        )
                         showAddDialog.value = false
                     }
                 }) { Text("Save to Storage") }

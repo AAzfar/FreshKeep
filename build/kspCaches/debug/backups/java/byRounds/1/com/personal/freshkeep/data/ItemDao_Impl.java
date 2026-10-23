@@ -42,7 +42,7 @@ public final class ItemDao_Impl implements ItemDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `inventory_items` (`id`,`barcode`,`name`,`category`,`expiryDateEpoch`,`quantity`) VALUES (nullif(?, 0),?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `inventory_items` (`id`,`barcode`,`name`,`category`,`expiryDateEpoch`,`quantity`,`rawJsonDetails`) VALUES (nullif(?, 0),?,?,?,?,?,?)";
       }
 
       @Override
@@ -58,6 +58,11 @@ public final class ItemDao_Impl implements ItemDao {
         statement.bindString(4, entity.getCategory());
         statement.bindLong(5, entity.getExpiryDateEpoch());
         statement.bindLong(6, entity.getQuantity());
+        if (entity.getRawJsonDetails() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindString(7, entity.getRawJsonDetails());
+        }
       }
     };
     this.__deletionAdapterOfInventoryItem = new EntityDeletionOrUpdateAdapter<InventoryItem>(__db) {
@@ -128,6 +133,7 @@ public final class ItemDao_Impl implements ItemDao {
           final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
           final int _cursorIndexOfExpiryDateEpoch = CursorUtil.getColumnIndexOrThrow(_cursor, "expiryDateEpoch");
           final int _cursorIndexOfQuantity = CursorUtil.getColumnIndexOrThrow(_cursor, "quantity");
+          final int _cursorIndexOfRawJsonDetails = CursorUtil.getColumnIndexOrThrow(_cursor, "rawJsonDetails");
           final List<InventoryItem> _result = new ArrayList<InventoryItem>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final InventoryItem _item;
@@ -147,7 +153,13 @@ public final class ItemDao_Impl implements ItemDao {
             _tmpExpiryDateEpoch = _cursor.getLong(_cursorIndexOfExpiryDateEpoch);
             final int _tmpQuantity;
             _tmpQuantity = _cursor.getInt(_cursorIndexOfQuantity);
-            _item = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity);
+            final String _tmpRawJsonDetails;
+            if (_cursor.isNull(_cursorIndexOfRawJsonDetails)) {
+              _tmpRawJsonDetails = null;
+            } else {
+              _tmpRawJsonDetails = _cursor.getString(_cursorIndexOfRawJsonDetails);
+            }
+            _item = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails);
             _result.add(_item);
           }
           return _result;
@@ -183,6 +195,7 @@ public final class ItemDao_Impl implements ItemDao {
           final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
           final int _cursorIndexOfExpiryDateEpoch = CursorUtil.getColumnIndexOrThrow(_cursor, "expiryDateEpoch");
           final int _cursorIndexOfQuantity = CursorUtil.getColumnIndexOrThrow(_cursor, "quantity");
+          final int _cursorIndexOfRawJsonDetails = CursorUtil.getColumnIndexOrThrow(_cursor, "rawJsonDetails");
           final InventoryItem _result;
           if (_cursor.moveToFirst()) {
             final int _tmpId;
@@ -201,7 +214,13 @@ public final class ItemDao_Impl implements ItemDao {
             _tmpExpiryDateEpoch = _cursor.getLong(_cursorIndexOfExpiryDateEpoch);
             final int _tmpQuantity;
             _tmpQuantity = _cursor.getInt(_cursorIndexOfQuantity);
-            _result = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity);
+            final String _tmpRawJsonDetails;
+            if (_cursor.isNull(_cursorIndexOfRawJsonDetails)) {
+              _tmpRawJsonDetails = null;
+            } else {
+              _tmpRawJsonDetails = _cursor.getString(_cursorIndexOfRawJsonDetails);
+            }
+            _result = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails);
           } else {
             _result = null;
           }

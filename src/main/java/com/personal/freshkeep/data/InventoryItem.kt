@@ -15,9 +15,10 @@ enum class ItemCategory(val displayName: String, val defaultDays: Int) {
 data class InventoryItem(
     @PrimaryKey(autoGenerate = true) 
     val id: Int = 0,
-    val barcode: String?, // Nullable to easily support manual additions
+    val barcode: String?,
     val name: String,
     val category: String = "OTHERS",
     val expiryDateEpoch: Long,
-    val quantity: Int
+    val quantity: Int,
+    val rawJsonDetails: String? = null // Storing the full raw server payload response payload string
 )

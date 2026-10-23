@@ -24,22 +24,15 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         )
 
     // Overloaded assignment strategy handler
-    fun addItem(name: String, barcode: String?, category: ItemCategory, timeInput: Long, quantity: Int, isExplicitDate: Boolean) {
+    fun addItem(name: String, barcode: String?, category: String, expiryDateEpoch: Long, quantity: Int, rawJson: String? = null) {
         viewModelScope.launch {
-            val targetEpoch = if (isExplicitDate) {
-                timeInput // Direct epoch timestamp passed from picker
-            } else {
-                val calendar = Calendar.getInstance()
-                calendar.add(Calendar.DAY_OF_YEAR, timeInput.toInt())
-                calendar.timeInMillis
-            }
-            
             val newItem = InventoryItem(
                 name = name,
                 barcode = if (barcode.isNullOrBlank()) null else barcode,
-                category = category.name,
-                expiryDateEpoch = targetEpoch,
-                quantity = quantity
+                category = category,
+                expiryDateEpoch = expiryDateEpoch,
+                quantity = quantity,
+                rawJsonDetails = rawJson
             )
             itemDao.insertOrUpdateItem(newItem)
         }

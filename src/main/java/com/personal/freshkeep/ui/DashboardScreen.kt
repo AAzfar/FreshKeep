@@ -66,24 +66,59 @@ fun DashboardScreen(
         LazyColumn(
             verticalArrangement = java.util.concurrent.atomic.AtomicInteger(8).get().let { Arrangement.spacedBy(8.dp) }
         ) {
+            // Inside LazyColumn:
             items(itemList, key = { it.id }) { item ->
-                InventoryRow(item = item, onDelete = { viewModel.removeItem(item) })
+                var activeJsonDetails = remember { mutableStateOf<String?>(null) }
+                
+                InventoryRow(
+                    item = item, 
+                    onDelete = { viewModel.removeItem(item) },
+                    onShowDetails = { json -> activeJsonDetails.value = json }
+                )
+                
+                // Interactive JSON System Viewer Modal overlay box
+                if (activeJsonDetails.value != null) {
+                    AlertDialog(
+                        onDismissRequest = { activeJsonDetails.value = null },
+                        title = { Text("Barcode Metadata Payload JSON") },
+                        text = {
+                            Box(modifier = Modifier.heightIn(max = 300.dp)) {
+                                LazyColumn {
+                                    item {
+                                        Text(
+                                            text = activeJsonDetails.value!!, 
+                                            fontSize = 11.sp, 
+                                            color = Color.DarkGray,
+                                            style = LocalTextStyle.current.copy(lineHeight = 16.sp)
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            Button(onClick = { activeJsonDetails.value = null }) { Text("Close") }
+                        }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun InventoryRow(item: InventoryItem, onDelete: () -> Unit) {
+fun InventoryRow(
+    item: InventoryItem, 
+    onDelete: () -> Unit,
+    onShowDetails: (String) -> Unit
+) {
     val currentTime = System.currentTimeMillis()
     val msLeft = item.expiryDateEpoch - currentTime
-    val daysLeft = TimeUnit.MILLISECONDS.toDays(msLeft)
+    val daysLeft = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(msLeft)
 
-    // Mainframe-logic boundary color assessment
     val statusColor = when {
-        daysLeft < 0 -> Color(0xFFBA1A1A)       // Expired: Solid Red
-        daysLeft <= 7 -> Color(0xFFE2C000)      // Warning < 7 days: Amber Yellow
-        else -> Color(0xFF386B01)               // Fresh: Forest Green
+        daysLeft < 0 -> Color(0xFFBA1A1A) 
+        daysLeft <= 7 -> Color(0xFFE2C000) 
+        else -> Color(0xFF386B01) 
     }
 
     Card(
@@ -93,11 +128,11 @@ fun InventoryRow(item: InventoryItem, onDelete: () -> Unit) {
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(text = item.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 Text(
                     text = if (daysLeft < 0) "Expired!" else "$daysLeft days left",
@@ -105,17 +140,31 @@ fun InventoryRow(item: InventoryItem, onDelete: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
+                Text(text = "Category: ${item.category}", fontSize = 12.sp, color = Color.Gray)
                 if (!item.barcode.isNullOrBlank()) {
                     Text(text = "Code: ${item.barcode}", fontSize = 11.sp, color = Color.Gray)
                 }
             }
             
-            Button(
-                onClick = onDelete,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFDAD7)),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-            ) {
-                Text("Remove", color = Color(0xFF410002), fontSize = 12.sp)
+            // Action Panel Management Layout Hub
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (!item.rawJsonDetails.isNullOrBlank()) {
+                    Button(
+                        onClick = { onShowDetails(item.rawJsonDetails) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE1F5FE)),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text("Details", color = Color(0xFF0288D1), fontSize = 12.sp)
+                    }
+                }
+                
+                Button(
+                    onClick = onDelete,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFDAD7)),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text("Remove", color = Color(0xFF410002), fontSize = 12.sp)
+                }
             }
         }
     }
