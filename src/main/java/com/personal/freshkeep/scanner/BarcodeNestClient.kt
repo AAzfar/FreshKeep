@@ -5,6 +5,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.net.SocketTimeoutException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -27,8 +28,8 @@ object BarcodeNestClient {
             val url = URL("https://api.barcodenest.com/v1/products/${barcode.trim()}")
             connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
-            connection.connectTimeout = 5000
-            connection.readTimeout = 5000
+            connection.connectTimeout = 15000
+            connection.readTimeout = 20000
             connection.setRequestProperty("X-API-Key", apiKey)
 
             val responseCode = connection.responseCode
@@ -51,6 +52,8 @@ object BarcodeNestClient {
             BarcodeLookupResult(productName, rawResponse, message)
         } catch (e: CancellationException) {
             throw e
+        } catch (e: SocketTimeoutException) {
+            BarcodeLookupResult(null, null, "BarcodeNest request timed out. Check your internet connection and try again.")
         } catch (e: Exception) {
             e.printStackTrace()
             BarcodeLookupResult(null, null, "BarcodeNest lookup failed: ${e.localizedMessage ?: "unknown error"}")
