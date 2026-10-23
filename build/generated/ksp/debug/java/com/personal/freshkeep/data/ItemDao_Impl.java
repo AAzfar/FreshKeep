@@ -9,6 +9,7 @@ import androidx.room.EntityDeletionOrUpdateAdapter;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
+import androidx.room.SharedSQLiteStatement;
 import androidx.room.util.CursorUtil;
 import androidx.room.util.DBUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
@@ -36,13 +37,15 @@ public final class ItemDao_Impl implements ItemDao {
 
   private final EntityDeletionOrUpdateAdapter<InventoryItem> __deletionAdapterOfInventoryItem;
 
+  private final SharedSQLiteStatement __preparedStmtOfUpdateAvailability;
+
   public ItemDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfInventoryItem = new EntityInsertionAdapter<InventoryItem>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `inventory_items` (`id`,`barcode`,`name`,`category`,`expiryDateEpoch`,`quantity`,`rawJsonDetails`) VALUES (nullif(?, 0),?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `inventory_items` (`id`,`barcode`,`name`,`category`,`expiryDateEpoch`,`quantity`,`rawJsonDetails`,`isAvailable`) VALUES (nullif(?, 0),?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -63,6 +66,8 @@ public final class ItemDao_Impl implements ItemDao {
         } else {
           statement.bindString(7, entity.getRawJsonDetails());
         }
+        final int _tmp = entity.isAvailable() ? 1 : 0;
+        statement.bindLong(8, _tmp);
       }
     };
     this.__deletionAdapterOfInventoryItem = new EntityDeletionOrUpdateAdapter<InventoryItem>(__db) {
@@ -76,6 +81,14 @@ public final class ItemDao_Impl implements ItemDao {
       protected void bind(@NonNull final SupportSQLiteStatement statement,
           @NonNull final InventoryItem entity) {
         statement.bindLong(1, entity.getId());
+      }
+    };
+    this.__preparedStmtOfUpdateAvailability = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE inventory_items SET isAvailable = ? WHERE id = ?";
+        return _query;
       }
     };
   }
@@ -118,6 +131,35 @@ public final class ItemDao_Impl implements ItemDao {
   }
 
   @Override
+  public Object updateAvailability(final int itemId, final boolean isAvailable,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfUpdateAvailability.acquire();
+        int _argIndex = 1;
+        final int _tmp = isAvailable ? 1 : 0;
+        _stmt.bindLong(_argIndex, _tmp);
+        _argIndex = 2;
+        _stmt.bindLong(_argIndex, itemId);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfUpdateAvailability.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Flow<List<InventoryItem>> getAllItemsSortedByExpiry() {
     final String _sql = "SELECT * FROM inventory_items ORDER BY expiryDateEpoch ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
@@ -134,6 +176,7 @@ public final class ItemDao_Impl implements ItemDao {
           final int _cursorIndexOfExpiryDateEpoch = CursorUtil.getColumnIndexOrThrow(_cursor, "expiryDateEpoch");
           final int _cursorIndexOfQuantity = CursorUtil.getColumnIndexOrThrow(_cursor, "quantity");
           final int _cursorIndexOfRawJsonDetails = CursorUtil.getColumnIndexOrThrow(_cursor, "rawJsonDetails");
+          final int _cursorIndexOfIsAvailable = CursorUtil.getColumnIndexOrThrow(_cursor, "isAvailable");
           final List<InventoryItem> _result = new ArrayList<InventoryItem>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final InventoryItem _item;
@@ -159,7 +202,11 @@ public final class ItemDao_Impl implements ItemDao {
             } else {
               _tmpRawJsonDetails = _cursor.getString(_cursorIndexOfRawJsonDetails);
             }
-            _item = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails);
+            final boolean _tmpIsAvailable;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsAvailable);
+            _tmpIsAvailable = _tmp != 0;
+            _item = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails,_tmpIsAvailable);
             _result.add(_item);
           }
           return _result;
@@ -196,6 +243,7 @@ public final class ItemDao_Impl implements ItemDao {
           final int _cursorIndexOfExpiryDateEpoch = CursorUtil.getColumnIndexOrThrow(_cursor, "expiryDateEpoch");
           final int _cursorIndexOfQuantity = CursorUtil.getColumnIndexOrThrow(_cursor, "quantity");
           final int _cursorIndexOfRawJsonDetails = CursorUtil.getColumnIndexOrThrow(_cursor, "rawJsonDetails");
+          final int _cursorIndexOfIsAvailable = CursorUtil.getColumnIndexOrThrow(_cursor, "isAvailable");
           final InventoryItem _result;
           if (_cursor.moveToFirst()) {
             final int _tmpId;
@@ -220,7 +268,11 @@ public final class ItemDao_Impl implements ItemDao {
             } else {
               _tmpRawJsonDetails = _cursor.getString(_cursorIndexOfRawJsonDetails);
             }
-            _result = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails);
+            final boolean _tmpIsAvailable;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsAvailable);
+            _tmpIsAvailable = _tmp != 0;
+            _result = new InventoryItem(_tmpId,_tmpBarcode,_tmpName,_tmpCategory,_tmpExpiryDateEpoch,_tmpQuantity,_tmpRawJsonDetails,_tmpIsAvailable);
           } else {
             _result = null;
           }

@@ -31,12 +31,12 @@ public final class AppDatabase_Impl extends AppDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(1) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS `inventory_items` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `barcode` TEXT, `name` TEXT NOT NULL, `category` TEXT NOT NULL, `expiryDateEpoch` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `rawJsonDetails` TEXT)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `inventory_items` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `barcode` TEXT, `name` TEXT NOT NULL, `category` TEXT NOT NULL, `expiryDateEpoch` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `rawJsonDetails` TEXT, `isAvailable` INTEGER NOT NULL DEFAULT 1)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0f73164f6d0ecfb386d32d11f2e019e5')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a5324b42e8eda6682da2d1c282aa688a')");
       }
 
       @Override
@@ -85,7 +85,7 @@ public final class AppDatabase_Impl extends AppDatabase {
       @NonNull
       public RoomOpenHelper.ValidationResult onValidateSchema(
           @NonNull final SupportSQLiteDatabase db) {
-        final HashMap<String, TableInfo.Column> _columnsInventoryItems = new HashMap<String, TableInfo.Column>(7);
+        final HashMap<String, TableInfo.Column> _columnsInventoryItems = new HashMap<String, TableInfo.Column>(8);
         _columnsInventoryItems.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsInventoryItems.put("barcode", new TableInfo.Column("barcode", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsInventoryItems.put("name", new TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -93,6 +93,7 @@ public final class AppDatabase_Impl extends AppDatabase {
         _columnsInventoryItems.put("expiryDateEpoch", new TableInfo.Column("expiryDateEpoch", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsInventoryItems.put("quantity", new TableInfo.Column("quantity", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsInventoryItems.put("rawJsonDetails", new TableInfo.Column("rawJsonDetails", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsInventoryItems.put("isAvailable", new TableInfo.Column("isAvailable", "INTEGER", true, 0, "1", TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysInventoryItems = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesInventoryItems = new HashSet<TableInfo.Index>(0);
         final TableInfo _infoInventoryItems = new TableInfo("inventory_items", _columnsInventoryItems, _foreignKeysInventoryItems, _indicesInventoryItems);
@@ -104,7 +105,7 @@ public final class AppDatabase_Impl extends AppDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "0f73164f6d0ecfb386d32d11f2e019e5", "3d7edb74b8109ab8595d5ac1725cb1fc");
+    }, "a5324b42e8eda6682da2d1c282aa688a", "c1694384dd3e8ba20f334160fb76dd1b");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

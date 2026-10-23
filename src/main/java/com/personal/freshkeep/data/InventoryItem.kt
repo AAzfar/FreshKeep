@@ -1,6 +1,7 @@
 package com.personal.freshkeep.data
 
 import androidx.room.Entity
+import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 
 enum class ItemCategory(val displayName: String, val defaultDays: Int) {
@@ -20,5 +21,7 @@ data class InventoryItem(
     val category: String = "OTHERS",
     val expiryDateEpoch: Long,
     val quantity: Int,
-    val rawJsonDetails: String? = null // Storing the full raw server payload response payload string
+    val rawJsonDetails: String? = null,
+    @ColumnInfo(defaultValue = "1")
+    val isAvailable: Boolean = true
 )

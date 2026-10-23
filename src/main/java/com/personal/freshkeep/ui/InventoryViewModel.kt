@@ -43,4 +43,10 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
             itemDao.deleteItem(item)
         }
     }
+
+    fun updateAvailability(item: InventoryItem, isAvailable: Boolean) {
+        viewModelScope.launch {
+            itemDao.updateAvailability(item.id, isAvailable)
+        }
+    }
 }

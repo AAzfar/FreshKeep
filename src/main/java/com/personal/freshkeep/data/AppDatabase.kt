@@ -1,17 +1,27 @@
 package com.personal.freshkeep.data
 
 import android.content.Context
+import androidx.room.migration.Migration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [InventoryItem::class], version = 1, exportSchema = false)
+@Database(entities = [InventoryItem::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun itemDao(): ItemDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE inventory_items ADD COLUMN isAvailable INTEGER NOT NULL DEFAULT 1"
+                )
+            }
+        }
 
         fun getDatabase(context: Context): AppDatabase {
             // Thread-safe lock to prevent multiple database instances running concurrently
@@ -21,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "freshkeep_database"
                 )
+                .addMigrations(MIGRATION_1_2)
                 .fallbackToDestructiveMigration() // Tells Room to safely re-create tables when fields change during dev
                 .build()
 

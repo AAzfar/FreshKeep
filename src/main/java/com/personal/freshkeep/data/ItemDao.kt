@@ -16,6 +16,9 @@ interface ItemDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateItem(item: InventoryItem)
 
+    @Query("UPDATE inventory_items SET isAvailable = :isAvailable WHERE id = :itemId")
+    suspend fun updateAvailability(itemId: Int, isAvailable: Boolean)
+
     @Delete
     suspend fun deleteItem(item: InventoryItem)
 }

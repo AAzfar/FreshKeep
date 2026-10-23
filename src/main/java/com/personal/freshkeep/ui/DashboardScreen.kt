@@ -14,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.personal.freshkeep.data.InventoryItem
-import java.util.concurrent.TimeUnit
 
 @Composable
 fun DashboardScreen(
@@ -24,6 +23,10 @@ fun DashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val itemList by viewModel.items.collectAsState()
+    var selectedSection by remember { mutableIntStateOf(0) }
+    val currentTime = System.currentTimeMillis()
+    val availableItems = itemList.filter { it.isAvailable && it.expiryDateEpoch >= currentTime }
+    val finishedItems = itemList.filter { !it.isAvailable || it.expiryDateEpoch < currentTime }
 
     Column(
         modifier = modifier
@@ -62,17 +65,40 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tabular Rows / Inventory Output
+        TabRow(selectedTabIndex = selectedSection) {
+            Tab(
+                selected = selectedSection == 0,
+                onClick = { selectedSection = 0 },
+                text = { Text("Available (${availableItems.size})") }
+            )
+            Tab(
+                selected = selectedSection == 1,
+                onClick = { selectedSection = 1 },
+                text = { Text("Finished / Expired (${finishedItems.size})") }
+            )
+        }
+
         LazyColumn(
-            verticalArrangement = java.util.concurrent.atomic.AtomicInteger(8).get().let { Arrangement.spacedBy(8.dp) }
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Inside LazyColumn:
-            items(itemList, key = { it.id }) { item ->
+            val sectionItems = if (selectedSection == 0) availableItems else finishedItems
+            if (sectionItems.isEmpty()) {
+                item {
+                    Text(
+                        text = if (selectedSection == 0) "No available items" else "No finished or expired items",
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        color = Color.Gray
+                    )
+                }
+            }
+            items(sectionItems, key = { it.id }) { item ->
                 var activeJsonDetails = remember { mutableStateOf<String?>(null) }
                 
                 InventoryRow(
                     item = item, 
                     onDelete = { viewModel.removeItem(item) },
+                    onAvailabilityChange = { isAvailable -> viewModel.updateAvailability(item, isAvailable) },
                     onShowDetails = { json -> activeJsonDetails.value = json }
                 )
                 
@@ -109,6 +135,7 @@ fun DashboardScreen(
 fun InventoryRow(
     item: InventoryItem, 
     onDelete: () -> Unit,
+    onAvailabilityChange: (Boolean) -> Unit,
     onShowDetails: (String) -> Unit
 ) {
     val currentTime = System.currentTimeMillis()
@@ -143,6 +170,17 @@ fun InventoryRow(
                 Text(text = "Category: ${item.category}", fontSize = 12.sp, color = Color.Gray)
                 if (!item.barcode.isNullOrBlank()) {
                     Text(text = "Code: ${item.barcode}", fontSize = 11.sp, color = Color.Gray)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (item.isAvailable) "Available" else "Finished",
+                        fontSize = 12.sp,
+                        color = if (item.isAvailable) Color(0xFF386B01) else Color(0xFF666666)
+                    )
+                    Switch(
+                        checked = item.isAvailable,
+                        onCheckedChange = onAvailabilityChange
+                    )
                 }
             }
             
